@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-public class DirectionVectorBehavior : MonoBehaviour
+public class DirectionVectorEditor : MonoBehaviour
 {
     [SerializeField] private Transform target;
 

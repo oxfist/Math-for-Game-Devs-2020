@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-public class RadialDetectorBehavior : MonoBehaviour
+public class RadialDetectorEditor : MonoBehaviour
 {
     [Range(0, 3)] public float radius = 1f;
     [SerializeField] private Transform secondPoint;
