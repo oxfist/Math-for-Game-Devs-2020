@@ -3,10 +3,10 @@
 public class BouncingLaserEditor : MonoBehaviour
 {
     [SerializeField] private bool bounceDebug;
-    [Range(1, 10)] [SerializeField] private int maxBounces = 1;
+    [Range(0, 10)] [SerializeField] private int maxBounces = 1;
     [Range(1, 15)] [SerializeField] private float maxLaserDistance = 1;
     [SerializeField] private Color hitColor = Color.green;
-    [SerializeField] private Color rangeColor = Color.yellow;
+    [SerializeField] private Color outOfRangeColor = Color.yellow;
 
     private const float BaseVectorSize = .35f;
 
@@ -20,18 +20,18 @@ public class BouncingLaserEditor : MonoBehaviour
 
     private void DrawBouncingLaser(Vector3 startPosition, Vector3 direction, int bounces)
     {
-        if (bounces == 0) return;
+        if (bounces < 0) return;
 
         if (Physics.Raycast(startPosition, direction, out RaycastHit hit, maxLaserDistance))
         {
             Debug.DrawRay(startPosition, direction * hit.distance, hitColor);
             Vector3 bounceDirection = CalculateBounceDirection(hit, direction);
+
             DrawBouncingLaser(hit.point, bounceDirection, bounces - 1);
         }
         else
         {
-            Gizmos.color = Color.yellow;
-            Debug.DrawRay(startPosition, direction * maxLaserDistance, rangeColor);
+            Debug.DrawRay(startPosition, direction * maxLaserDistance, outOfRangeColor);
         }
     }
 
@@ -53,13 +53,8 @@ public class BouncingLaserEditor : MonoBehaviour
 
     private static void DrawBaseVectorsAt(Vector3 position, Vector3 right, Vector3 up, Vector3 front)
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawRay(position, up * BaseVectorSize);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawRay(position, right * BaseVectorSize);
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawRay(position,  front * BaseVectorSize);
+        Debug.DrawRay(position, up * BaseVectorSize, Color.green);
+        Debug.DrawRay(position, right * BaseVectorSize, Color.red);
+        Debug.DrawRay(position,  front * BaseVectorSize, Color.cyan);
     }
 }
