@@ -1,11 +1,15 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class TurretPlacerEditor : MonoBehaviour
 {
     [SerializeField] private Color hitColor = Color.green;
+    [SerializeField] private float gunHeight = 1.3f;
+    [SerializeField] private float distanceBetweenGuns = .3f;
+    [SerializeField] private float gunBarrelLength = .8f;
 
-    private readonly Vector3[] _wireframeCubeLocalCoordinates = {
+    private static readonly Vector3[] WireframeCubeLocalCoordinates = {
         // bottom 4 positions:
         new Vector3(1, 0, 1),
         new Vector3(-1, 0, 1),
@@ -42,29 +46,53 @@ public class TurretPlacerEditor : MonoBehaviour
             DrawBaseVectorsAt(hit.point, right, up, forward);
 
             Matrix4x4 localToWorldTransformation = BuildTransformationMatrixFrom(hit.point, up, forward);
-            DrawWireFrameCubeAt(_wireframeCubeLocalCoordinates, localToWorldTransformation);
+            DrawWireFrameCubeAt(WireframeCubeLocalCoordinates, localToWorldTransformation);
+            DrawGunsWith(gunHeight, distanceBetweenGuns, gunBarrelLength, localToWorldTransformation);
         }
     }
 
-    private static void DrawWireFrameCubeAt(IReadOnlyList<Vector3> cubeCoordinates, Matrix4x4 localToWorldTransformation)
+    private static void DrawGunsWith(float gunHeight, float distanceBetweenGuns, float gunBarrelLength, Matrix4x4 localToWorldTransformation)
     {
+        Vector3 localGunPosition = Vector3.up * gunHeight;
+        Vector3 localGunEndPosition = Vector3.forward * gunBarrelLength;
+        Vector3 localBarrelOffset = Vector3.right * (distanceBetweenGuns / 2);
+
+        Vector3 worldGunPosition1 = TransformLocalToWorld(localGunPosition + localBarrelOffset, localToWorldTransformation);
+        Vector3 worldGunEndPosition1 = TransformLocalToWorld(localGunPosition + localGunEndPosition + localBarrelOffset, localToWorldTransformation);
+        Vector3 worldGunPosition2 = TransformLocalToWorld(localGunPosition - localBarrelOffset, localToWorldTransformation);
+        Vector3 worldGunEndPosition2 = TransformLocalToWorld(localGunPosition + localGunEndPosition - localBarrelOffset, localToWorldTransformation);
+
+        Debug.DrawLine(worldGunPosition1, worldGunEndPosition1, Color.yellow);
+        Debug.DrawLine(worldGunPosition2, worldGunEndPosition2, Color.yellow);
+        Debug.DrawLine(worldGunPosition1, worldGunPosition2, Color.yellow);
+    }
+
+    private static void DrawWireFrameCubeAt(IEnumerable<Vector3> cubeCoordinates, Matrix4x4 localToWorldTransformation)
+    {
+        List<Vector3> worldCoordinates = cubeCoordinates.Select(coordinate => TransformLocalToWorld(coordinate, localToWorldTransformation)).ToList();
+
         // Bottom sides
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[0]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[1]), Color.yellow);
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[1]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[2]), Color.yellow);
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[2]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[3]), Color.yellow);
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[3]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[0]), Color.yellow);
+        Debug.DrawLine(worldCoordinates[0], worldCoordinates[1], Color.yellow);
+        Debug.DrawLine(worldCoordinates[1], worldCoordinates[2], Color.yellow);
+        Debug.DrawLine(worldCoordinates[2], worldCoordinates[3], Color.yellow);
+        Debug.DrawLine(worldCoordinates[3], worldCoordinates[0], Color.yellow);
 
         // Top sides
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[4]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[5]), Color.yellow);
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[5]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[6]), Color.yellow);
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[6]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[7]), Color.yellow);
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[7]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[4]), Color.yellow);
+        Debug.DrawLine(worldCoordinates[4], worldCoordinates[5], Color.yellow);
+        Debug.DrawLine(worldCoordinates[5], worldCoordinates[6], Color.yellow);
+        Debug.DrawLine(worldCoordinates[6], worldCoordinates[7], Color.yellow);
+        Debug.DrawLine(worldCoordinates[7], worldCoordinates[4], Color.yellow);
 
         // Vertical sides
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[0]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[4]), Color.yellow);
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[1]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[5]), Color.yellow);
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[2]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[6]), Color.yellow);
-        Debug.DrawLine(localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[3]), localToWorldTransformation.MultiplyPoint3x4(cubeCoordinates[7]), Color.yellow);
+        Debug.DrawLine(worldCoordinates[0], worldCoordinates[4], Color.yellow);
+        Debug.DrawLine(worldCoordinates[1], worldCoordinates[5], Color.yellow);
+        Debug.DrawLine(worldCoordinates[2], worldCoordinates[6], Color.yellow);
+        Debug.DrawLine(worldCoordinates[3], worldCoordinates[7], Color.yellow);
+    }
+
+    private static Vector3 TransformLocalToWorld(Vector3 localPosition, Matrix4x4 localToWorldTransformation)
+    {
+        return localToWorldTransformation.MultiplyPoint3x4(localPosition);
     }
 
     private static Matrix4x4 BuildTransformationMatrixFrom(Vector3 position, Vector3 normal, Vector3 forward)
